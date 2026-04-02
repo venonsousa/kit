@@ -1,0 +1,653 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Pantalla Inicio – Gamer UI con IA</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<!-- GOOGLE FONTS -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* =========================
+   RESET + BASE
+========================= */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    height: 100vh;
+    height: 100dvh;
+    font-family: 'Inter', sans-serif;
+    color: #fff;
+    /* FONDO REPARADO Y EN UNA SOLA LÍNEA PARA EVITAR ERRORES DE LECTURA */
+    background: linear-gradient(120deg, rgba(0,0,0,.75), rgba(0,0,0,.45)), url("https://xatimg.com/image/IvkRZ4PYqkhW.png") center / cover no-repeat;
+    background-color: #111;
+    overflow: hidden;
+}
+
+/* =========================
+   LAYOUT
+========================= */
+.app { display: flex; height: 100%; width: 100%; }
+
+/* SIDEBAR */
+.sidebar {
+    width: 80px; height: 100%;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    gap: 22px; border-right: 1px solid rgba(255,255,255,0.1);
+    z-index: 50; flex-shrink: 0;
+}
+
+.sidebar button {
+    width: 48px; height: 48px;
+    border-radius: 50%; border: none;
+    background: rgba(255,255,255,0.08);
+    cursor: pointer; display: grid; place-items: center;
+    transition: transform 0.3s, background 0.3s;
+    position: relative; overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.sidebar button:hover {
+    background: rgba(255,255,255,0.25);
+    transform: scale(1.15);
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.sidebar svg { width: 22px; height: 22px; fill: #fff; opacity: 0.9; }
+
+/* MINI DISCO GIRATORIO */
+.music-disc {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: conic-gradient(#111 0%, #333 25%, #111 50%, #333 75%, #111 100%);
+    border: 2px solid rgba(255,255,255,0.1);
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    position: relative;
+    cursor: pointer;
+    margin-top: 10px;
+    display: flex; justify-content: center; align-items: center;
+    transition: transform 0.3s, border-color 0.3s;
+}
+
+.music-disc::before {
+    content: ''; position: absolute; width: 16px; height: 16px;
+    background: radial-gradient(circle, #ff0055 30%, #a80038 100%);
+    border-radius: 50%; z-index: 2;
+}
+
+.music-disc::after {
+    content: ''; position: absolute; width: 4px; height: 4px;
+    background: #000; border-radius: 50%; z-index: 3;
+}
+
+.music-disc:hover { transform: scale(1.1); border-color: rgba(255,255,255,0.4); }
+
+@keyframes spinDisc { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.music-disc.spinning {
+    animation: spinDisc 3s linear infinite;
+    border-color: rgba(0, 229, 255, 0.6);
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+}
+
+/* CONTENT */
+.content { flex: 1; position: relative; display: flex; overflow: hidden; height: 100%; }
+
+/* HOME VIEW */
+#home-view {
+    width: 100%; height: 100%; padding: 40px 60px;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: flex-end;
+    position: absolute; top: 0; left: 0;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+    z-index: 1; overflow-y: auto; overflow-x: hidden;
+    visibility: visible;
+}
+#home-view.hidden { opacity: 0; pointer-events: none; visibility: hidden; z-index: -1; }
+
+.top-section { display: flex; flex-direction: column; align-items: flex-end; margin: auto 0; width: 100%; }
+
+.title { text-align: right; margin-bottom: 20px; opacity: 0; animation: slideIn 0.8s ease-out forwards 0.2s; }
+.title h1 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: clamp(40px, 8vw, 90px);
+    font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; line-height: 0.9;
+    background: linear-gradient(to bottom right, #ffffff 30%, #a0a0a0 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+}
+
+.info-container { max-width: 600px; text-align: right; display: flex; flex-direction: column; align-items: flex-end; opacity: 0; animation: slideIn 0.8s ease-out forwards 0.4s; }
+.info {
+    font-family: 'Inter', sans-serif; font-weight: 300;
+    font-size: clamp(13px, 1.5vw, 16px); line-height: 1.6;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    background: rgba(0,0,0,0.2); padding: 15px;
+    border-radius: 8px; border-right: 2px solid rgba(255,255,255,0.3);
+}
+
+.bottom-buttons { margin-top: 40px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 25px; opacity: 0; animation: slideUpCenter 0.8s ease-out forwards 0.6s; padding-bottom: 20px; }
+.platform-buttons { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; width: 100%; }
+.platform-buttons button {
+    font-family: 'Rajdhani', sans-serif; font-weight: 600; letter-spacing: 1px;
+    /* ESCRITURA NORMAL (SE ELIMINÓ TEXT-TRANSFORM UPPERCASE) */
+    padding: 12px 24px;
+    border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    color: #fff; font-size: 14px; cursor: pointer; transition: 0.3s;
+    min-width: 120px; text-align: center;
+}
+.platform-buttons button:hover { background: rgba(255,255,255,0.35); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.4); }
+
+/* CONTADOR Y FIRMA */
+.signature-block { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.signature { font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 500; opacity: 0.8; letter-spacing: 2px; }
+.visit-counter {
+    font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 700;
+    color: #00eaff; letter-spacing: 2px; text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(0,234,255,0.5); margin-top: 5px;
+    border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px;
+}
+
+/* GALERÍA */
+.view-section { 
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+    background-color: #0f0f11; display: flex; flex-direction: column; align-items: center; 
+    padding: 40px; opacity: 0; pointer-events: none; visibility: hidden; 
+    transition: opacity 0.5s ease, visibility 0.5s ease; z-index: 10; overflow-y: auto; -webkit-overflow-scrolling: touch; 
+}
+.view-section.active { opacity: 1; pointer-events: auto; visibility: visible; }
+.gallery-header { text-align: center; margin-bottom: 30px; width: 100%; position: relative; padding-top: 10px; min-height: 50px; display: flex; align-items: center; justify-content: center; }
+.gallery-title { font-family: 'Rajdhani', sans-serif; font-size: clamp(24px, 4vw, 32px); font-weight: 700; letter-spacing: 0.4em; color: #fff; text-transform: uppercase; padding-left: 0.4em; }
+.typing-cursor { display: inline-block; width: 2px; height: 24px; background-color: #fff; margin-left: 10px; animation: blink 1s infinite; vertical-align: middle; }
+
+/* BOTÓN VOLVER FIJO Y SEGURO */
+.back-btn { 
+    font-family: 'Rajdhani', sans-serif; text-transform: uppercase; letter-spacing: 1px; 
+    position: fixed; bottom: 30px; left: 110px; /* Inferior Izquierda */
+    padding: 10px 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); 
+    border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer; 
+    border-radius: 4px; font-weight: 600; font-size: 13px; z-index: 999; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: 0.3s;
+}
+.back-btn:hover { background: rgba(255,255,255,0.2); transform: translateY(-3px); border-color: rgba(255,255,255,0.4); }
+
+.gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; width: 100%; max-width: 1400px; justify-items: center; padding-bottom: 80px; }
+.gallery-item { width: 100%; max-width: 400px; aspect-ratio: 16/10; position: relative; overflow: hidden; border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); cursor: pointer; transition: transform 0.4s; background: #2a2a2a; border: 1px solid rgba(255,255,255,0.05); }
+.gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+.gallery-grid.pstyle-mode .gallery-item { aspect-ratio: 4/1; }
+.gallery-grid.sala-mode .gallery-item { aspect-ratio: 16/9; }
+.gallery-grid.gifs-mode { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 15px; align-items: start; }
+.gallery-grid.gifs-mode .gallery-item { aspect-ratio: auto; width: auto; height: auto; background: transparent; border: none; box-shadow: none; display: flex; flex-direction: column; align-items: center; overflow: visible; }
+.gallery-grid.gifs-mode .gallery-item img { width: 80px; height: 80px; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
+.item-caption { margin-top: 8px; font-family: 'Rajdhani', sans-serif; font-size: 13px; color: #ccc; text-align: center; text-transform: uppercase; font-weight: 600; }
+.gallery-item:hover:not(.gifs-mode .gallery-item) { transform: scale(1.05); }
+
+/* VISTA COLORES CON SCROLL Y ZOOM */
+#colores-view { 
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+    background: #000; display: flex; overflow: auto; justify-content: center;
+    opacity: 0; pointer-events: none; visibility: hidden; transition: opacity 0.5s ease, visibility 0.5s ease; z-index: 20; 
+}
+#colores-view.active { opacity: 1; pointer-events: auto; visibility: visible; }
+.colores-img { 
+    margin: auto; max-width: 100%; max-height: 100%; width: auto; height: auto;
+    object-fit: contain; z-index: 1; cursor: zoom-in; 
+    transition: width 0.3s ease, height 0.3s ease; 
+}
+.colores-img.zoomed { max-width: none; max-height: none; width: 150%; height: auto; cursor: zoom-out; }
+
+/* MARRIED VIEW */
+#married-view {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: #0d0d0e; 
+    display: flex; flex-direction: column; align-items: center; padding: 40px; padding-bottom: 100px;
+    opacity: 0; pointer-events: none; visibility: hidden; transition: opacity 0.5s ease, visibility 0.5s ease; z-index: 20;
+    overflow-y: auto;
+}
+#married-view.active { opacity: 1; pointer-events: auto; visibility: visible; }
+
+.married-content { display: flex; flex-direction: column; align-items: center; justify-content: center; max-width: 800px; width: 100%; margin-top: 20px; }
+.married-title {
+    font-family: 'Rajdhani', sans-serif; font-size: clamp(20px, 3vw, 28px);
+    font-weight: 600; text-align: center; color: #e0e0e0;
+    margin-bottom: 30px; letter-spacing: 1px; line-height: 1.4;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+.married-display {
+    width: 100%; max-width: 500px; aspect-ratio: 16/9;
+    background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px; overflow: hidden; margin-bottom: 30px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+}
+.married-display img { width: 100%; height: 100%; object-fit: contain; transition: opacity 0.4s ease; opacity: 0; }
+.married-display img.visible { opacity: 1; }
+
+.hearts-container { display: flex; gap: 15px; margin-bottom: 40px; }
+.heart-btn {
+    width: 48px; height: 48px; border-radius: 50%; border: none;
+    background: rgba(255,255,255,0.08); cursor: pointer; display: grid; place-items: center;
+    transition: transform 0.3s, background 0.3s; position: relative; overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+}
+.heart-btn::after {
+    content: ''; position: absolute; top: 0; left: -150%; width: 50%; height: 100%;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.9), transparent);
+    transform: skewX(-25deg); transition: none;
+}
+.heart-btn:hover::after { left: 150%; transition: left 0.6s ease; }
+.heart-btn:hover { background: rgba(255,255,255,0.25); transform: scale(1.15); border: 1px solid rgba(255,255,255,0.3); }
+.heart-btn svg { width: 22px; height: 22px; fill: #fff; opacity: 0.9; }
+
+.love-text {
+    font-family: 'Rajdhani', sans-serif; font-size: 24px; font-weight: 700;
+    color: #fff; letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 30px; text-shadow: 0 0 15px rgba(255, 105, 180, 0.5);
+}
+.coquita-btn {
+    font-family: 'Rajdhani', sans-serif; font-weight: 600; letter-spacing: 1px;
+    padding: 12px 24px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    color: #fff; font-size: 14px; cursor: pointer; transition: 0.3s; min-width: 120px; text-align: center;
+}
+.coquita-btn:hover { background: rgba(255,255,255,0.35); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(255,105,180,0.3); border-color: rgba(255,255,255,0.4); }
+
+/* LIGHTBOX */
+.lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(5px); z-index: 1000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+.lightbox.open { opacity: 1; pointer-events: auto; }
+.lightbox-img { max-width: 95%; max-height: 80vh; box-shadow: 0 0 50px rgba(255,255,255,0.1); border-radius: 2px; }
+.lightbox-close, .lightbox-nav { position: absolute; color: #fff; background: none; border: none; cursor: pointer; transition: 0.3s; }
+.lightbox-close { top: 20px; right: 20px; font-size: 36px; z-index: 1010; }
+.lightbox-nav { top: 50%; transform: translateY(-50%); font-size: 30px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 4px; z-index: 1010; }
+.lightbox-nav:hover { background: rgba(255,255,255,0.3); }
+.nav-prev { left: 10px; } .nav-next { right: 10px; }
+
+@keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes slideUpCenter { from { opacity: 0; transform: translate(0, 30px); } to { opacity: 1; transform: translate(0, 0); } }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+    .content { flex-direction: column; }
+    #home-view { padding: 30px; align-items: center; }
+    .top-section { align-items: center; text-align: center; margin-top: 20px; }
+    .title { text-align: center; }
+    .info-container { text-align: center; align-items: center; border-right: none; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 20px; }
+}
+@media (max-width: 600px) {
+    .sidebar { width: 60px; }
+    #home-view { padding: 20px; padding-bottom: 80px; }
+    .title h1 { letter-spacing: 2px; margin-right: 0; }
+    .bottom-buttons { margin-top: 30px; gap: 20px; }
+    .platform-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 320px; }
+    .platform-buttons button { padding: 10px 5px; font-size: 13px; min-width: 0; width: 100%; }
+    .gallery-header { flex-direction: column; gap: 15px; margin-bottom: 20px; }
+    .back-btn { bottom: 20px; left: 80px; }
+    .gallery-title { font-size: 20px; letter-spacing: 0.2em; padding-left: 0; }
+    .gallery-grid { gap: 15px; padding: 0 10px 80px 10px; }
+    .lightbox-nav { padding: 15px 5px; background: rgba(0,0,0,0.5); }
+    .married-display { max-width: 100%; aspect-ratio: 4/3; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- AUDIO PLAYER INVISIBLE -->
+<audio id="bg-music" loop src="https://www.dropbox.com/scl/fi/d4uby26e230fa1fy9wbf6/On-Melancholy-Hill.mp4?rlkey=q1biqrfxvncpum923l0i8ocm2&st=m0xwg36j&raw=1"></audio>
+
+<div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <button id="btn-pcback" title="Pcback Clásico"><svg viewBox="-2 -2 28 28"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg></button>
+        <button id="btn-pstyle" title="Pstyle Clásico"><svg viewBox="-2 -2 28 28"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg></button>
+        <button id="btn-pcback-gif" title="Pcback Gif"><svg viewBox="-2 -2 28 28"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg></button>
+        <button id="btn-pstyle-gif" title="Pstyle gif"><svg viewBox="-2 -2 28 28"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg></button>
+        <button id="btn-sala" title="Sala"><svg viewBox="-2 -2 28 28"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg></button>
+        <button id="btn-gifs" title="GIFS"><svg viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z"/></svg></button>
+        <!-- DISCO GIRATORIO -->
+        <div class="music-disc" id="music-disc" title="Pausar/Reproducir Música"></div>
+    </aside>
+
+    <main class="content">
+        <!-- VISTA HOME -->
+        <div id="home-view">
+            <div class="top-section">
+                <div class="title"><h1>MI PORTAFOLIO</h1></div>
+                <div class="info-container">
+                    <div id="game-description" class="info">
+                        <strong>¡Hola! Bienvenido...</strong><br><br>
+                        Este es un espacio donde las ideas se toman en serio. Aquí encontrarás proyectos creados con creatividad y dedicación, pensado para conectar, comunicar y funcionar de verdad. Gracias por estar aquí; si algo te hace decir “esto es justo lo que buscaba”, entonces ya vamos por buen camino.
+                    </div>
+                </div>
+            </div>
+            <div class="bottom-buttons">
+                <!-- BOTONES EN ORDEN EXACTO SOLICITADO -->
+                <div class="platform-buttons">
+                    <button id="btn-married">Married ♡</button>
+                    <button onclick="window.open('http://xat.com/thezer0', '_blank')">TheZer0</button>
+                    <button id="btn-colores">Colores</button>
+                    <button onclick="window.open('https://www.flickr.com/photos/takisdesign/', '_blank')">Flickr</button>
+                </div>
+                <!-- BLOQUE DE FIRMA Y CONTADOR -->
+                <div class="signature-block">
+                    <div class="signature">тaкιѕ™</div>
+                    <div class="signature">1543076189</div>
+                    <div id="visit-counter" class="visit-counter">Cargando...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VISTAS SECUNDARIAS -->
+        <div id="gallery-view" class="view-section">
+            <button class="back-btn" id="btn-back">← Volver</button>
+            <div class="gallery-header">
+                <div class="gallery-title-container"><span id="gallery-title-text" class="gallery-title"></span><span class="typing-cursor"></span></div>
+            </div>
+            <div class="gallery-grid" id="gallery-grid"></div>
+        </div>
+
+        <!-- VISTA COLORES -->
+        <div id="colores-view">
+            <button class="back-btn" id="btn-back-colores">← Volver</button>
+            <img src="https://xatimg.com/image/U9F2tAO857yk.png" class="colores-img" alt="Colores">
+        </div>
+
+        <!-- VISTA MARRIED -->
+        <div id="married-view">
+            <button class="back-btn" id="btn-back-married">← Volver</button>
+            <div class="married-content">
+                <h2 class="married-title">No es una galería, es un pedacito de nuestra historia. Momentos simples y recuerdos que se quedan.</h2>
+                
+                <div class="married-display">
+                    <img id="married-img-display" src="" alt="Recuerdo">
+                </div>
+
+                <div class="hearts-container">
+                    <button class="heart-btn" onclick="setMarriedImage('https://xatimg.com/image/MTFSTQv8KqHC.png')">
+                        <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 17.5 3 20.58 3 23 5.42 23 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    </button>
+                    <button class="heart-btn" onclick="setMarriedImage('https://xatimg.com/image/zyqXr0yhCaCi.png')">
+                        <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 17.5 3 20.58 3 23 5.42 23 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    </button>
+                    <button class="heart-btn" onclick="setMarriedImage('https://xatimg.com/image/5s9mgeykvOyW.png')">
+                        <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 17.5 3 20.58 3 23 5.42 23 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    </button>
+                </div>
+
+                <div class="love-text">Te amo mi amor</div>
+                
+                <button class="coquita-btn" onclick="window.open('https://xat.me/CocaCoLa', '_blank')">Mi Coquita ♡</button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- LIGHTBOX -->
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox-close" id="lightbox-close">&times;</button>
+        <button class="lightbox-nav nav-prev" id="prev-img">&#10094;</button>
+        <img src="" alt="Full View" class="lightbox-img" id="lightbox-img">
+        <button class="lightbox-nav nav-next" id="next-img">&#10095;</button>
+    </div>
+</div>
+
+<script>
+    // DATOS DE GALERÍA
+    const galleryData = {
+        pcback: [
+            "https://xatimg.com/image/NtNCnm7NU4Lz.png", "https://xatimg.com/image/JeZSmszlJXlT.png", "https://xatimg.com/image/1vKPsHkPp31h.png", "https://xatimg.com/image/5larWIscFUtn.png",
+            "https://xatimg.com/image/2022Fb6bOQEW.png", "https://xatimg.com/image/IaSFJJvxPjXK.png", "https://xatimg.com/image/DNEoNFWI3M7R.png", "https://xatimg.com/image/ImUpp9LhtUrE.jpg",
+            "https://xatimg.com/image/VJbUatWn2YbQ.png", "https://xatimg.com/image/x33X34jFuFid.png", "https://xatimg.com/image/5d8tVxz1zyhQ.png", "https://xatimg.com/image/ZcnSIW05zwoT.png",
+            "https://xatimg.com/image/5hMq4fK69TcO.png", "https://xatimg.com/image/osQW0e1dZa9M.png", "https://xatimg.com/image/ohVj8MC4s5LJ.png", "https://xatimg.com/image/lQc2FFhsbIDk.png",
+            "https://xatimg.com/image/1sJ8qWb8nBp2.png", "https://xatimg.com/image/9ZEMty2xZrMI.png", "https://xatimg.com/image/8haXSfyonHFW.png", "https://xatimg.com/image/aLTPMGUD2xEa.png",
+            "https://xatimg.com/image/yrbCO6jdznpG.png", "https://xatimg.com/image/V0MNZeUYAOFx.png", "https://xatimg.com/image/9cz19CwbRIn4.png", "https://xatimg.com/image/dU7P3bYNHDTt.png",
+            "https://xatimg.com/image/bea8Tn50DLDZ.png", "https://xatimg.com/image/JOvbNKaVlUfi.png", "https://xatimg.com/image/SH2zuMTdN4DZ.png", "https://xatimg.com/image/VjfjepstyyXB.png",
+            "https://xatimg.com/image/hFOWpTNFfGc5.png", "https://xatimg.com/image/pSff0LNR7rKg.jpg", "https://xatimg.com/image/V8bqKrVwNmUU.png", "https://xatimg.com/image/21ZH3V2wFgEU.png",
+            "https://xatimg.com/image/nuxRajJvELNp.png", "https://xatimg.com/image/U56awY1ivaYN.png", "https://xatimg.com/image/Y8o8SVUQSnHi.png", "https://xatimg.com/image/KCJQ5Hbbe14z.png",
+            "https://xatimg.com/image/1a4PwQ4iOR04.png", "https://xatimg.com/image/QAJE5GAORtDe.png", "https://xatimg.com/image/RorcZO4x4MVn.png", "https://xatimg.com/image/sZv6pyQVs3Mx.png",
+            "https://xatimg.com/image/QDtHY07WHUt8.png", "https://xatimg.com/image/U0sodGoiHHGK.png", "https://xatimg.com/image/mzUpTzUyArhf.png"
+        ],
+        pstyle: [
+            "https://xatimg.com/image/yLs7WiqxFOZU.png", "https://xatimg.com/image/e9MHA8fv2AkU.png", "https://xatimg.com/image/MXWmNQGrfucv.png", "https://xatimg.com/image/SCLbNRgrdWtB.png",
+            "https://xatimg.com/image/Ff1hV1hdVKuZ.png", "https://xatimg.com/image/C9INICGnySPD.png", "https://xatimg.com/image/Wvzy8k6rSFRw.png", "https://xatimg.com/image/sPdijVec37Uy.png",
+            "https://xatimg.com/image/lLJzlMJs2a3F.png", "https://xatimg.com/image/c1xgasTgX8wd.png", "https://xatimg.com/image/FgQNrOn0ph5q.png", "https://xatimg.com/image/5K2vxCysHhnU.png",
+            "https://xatimg.com/image/mcu49o8RLNHW.png", "https://xatimg.com/image/tiwhN2lK7JO6.png", "https://xatimg.com/image/t6LPhVbibCVt.png", "https://xatimg.com/image/ATO2KAuPESSx.png",
+            "https://xatimg.com/image/KfS7ECyYS313.png", "https://xatimg.com/image/oksShLU9nhAg.png", "https://xatimg.com/image/h3GqhfPV57yE.png", "https://xatimg.com/image/5y3ecWvt16Nl.png",
+            "https://xatimg.com/image/ifwPfeDi5Ghy.png", "https://xatimg.com/image/3p3CAfmjnSVm.png", "https://xatimg.com/image/R0V4e75N33RX.png", "https://xatimg.com/image/CWCDPpy2ABDE.png",
+            "https://xatimg.com/image/rBFk1PK9Q4dE.png"
+        ],
+        pcback_gif: [
+            "https://xatimg.com/image/ne72yCicOLUk.gif", "https://xatimg.com/image/xctjWJ42ADQS.gif", "https://xatimg.com/image/6FkFu0dLvnqz.gif", "https://xatimg.com/image/ypZldLQbDAuD.gif",
+            "https://xatimg.com/image/sKAPqKC9YBJF.gif", "https://xatimg.com/image/8Cup48Hcykl3.gif", "https://xatimg.com/image/et3zusULhGVW.gif", "https://xatimg.com/image/bo6caE3lusVR.gif",
+            "https://xatimg.com/image/Qa0asr2TiAx1.gif", "https://xatimg.com/image/YKYaD4tAT5fr.gif", "https://xatimg.com/image/7hrl1nRi0iNE.gif", "https://xatimg.com/image/VP1P6l7CaZC9.gif",
+            "https://xatimg.com/image/Q414jykg1uAb.gif", "https://xatimg.com/image/zP1A1dq0nH2i.gif", "https://xatimg.com/image/TnvX4D4W7634.gif", "https://xatimg.com/image/FOqYHHNdKgot.gif",
+            "https://xatimg.com/image/nOJTL59eouqN.gif", "https://xatimg.com/image/nIzCADiHeoBp.gif", "https://xatimg.com/image/xVJ23R1CRqhu.gif", "https://xatimg.com/image/NMIWjDm3p5d0.gif",
+            "https://xatimg.com/image/XwhdQSTDsekK.gif", "https://xatimg.com/image/otWyofGRtmtC.gif", "https://xatimg.com/image/XUvur4UnmpnQ.gif", "https://xatimg.com/image/PSzAWgUsMUUG.gif",
+            "https://xatimg.com/image/jn7YVrc1nvwO.gif", "https://xatimg.com/image/aupi78O4Qwo7.gif", "https://xatimg.com/image/zoPltMHpM9Wx.gif", "https://xatimg.com/image/I3n7gjzif9bG.gif",
+            "https://xatimg.com/image/nUnYp74Nh2MY.gif", "https://xatimg.com/image/AXfLo8mTfD3Q.gif", "https://xatimg.com/image/dOWwJ8JUlAof.gif", "https://xatimg.com/image/4XIDE1IoMtre.gif",
+            "https://xatimg.com/image/6POlOr9YkwUE.gif", "https://xatimg.com/image/YJAK3sqHODyD.gif", "https://xatimg.com/image/9cfx0OkEfVdt.gif", "https://xatimg.com/image/g314DQh4lyqy.gif",
+            "https://xatimg.com/image/wl3SzwhV5TTr.gif", "https://xatimg.com/image/xxJpQdB6B3xE.gif", "https://xatimg.com/image/Wic4Iz7Zi5CF.gif", "https://xatimg.com/image/CZKfnLi7QBcX.gif",
+            "https://xatimg.com/image/TVH79uIJ0ggG.gif", "https://xatimg.com/image/Cwzafa3KTdLx.gif", "https://xatimg.com/image/RlkSWlMMOIC3.gif", "https://xatimg.com/image/vwg7btBB5Cdn.gif",
+            "https://xatimg.com/image/v6z3S6VR6wUn.gif", "https://xatimg.com/image/XEI8YKILYU7p.gif", "https://xatimg.com/image/UCqkOuCD6NoO.gif", "https://xatimg.com/image/q24nHEftCN6a.gif",
+            "https://xatimg.com/image/XzgvyMFG1eeb.gif", "https://xatimg.com/image/FHquYUeZWMre.gif", "https://xatimg.com/image/RH3loNV86s90.gif", "https://xatimg.com/image/IFWzkDFUJTbj.gif",
+            "https://xatimg.com/image/ktvOOy1e8zPN.gif", "https://xatimg.com/image/wb9LYYKxMFJm.gif", "https://xatimg.com/image/dWZk5PqQ7npW.gif", "https://xatimg.com/image/BBfrKJ3ZkUEc.gif",
+            "https://xatimg.com/image/4WEYsVU9wiYv.gif"
+        ],
+        sala: [
+            "https://xatimg.com/image/t1gzwlDoliZ3.png", "https://xatimg.com/image/Jgdskbo1bACr.png", "https://xatimg.com/image/pDTlNVaFFgQV.png", "https://xatimg.com/image/sKk2dX6AZONT.png",
+            "https://xatimg.com/image/IHvJ2bbBhl8D.png", "https://xatimg.com/image/NlfruKJYTt4Y.png", "https://xatimg.com/image/PakGjFraZTaQ.png", "https://xatimg.com/image/g25xEk4P4so7.png",
+            "https://xatimg.com/image/A7Hc447BP4hn.png", "https://xatimg.com/image/ltYJ2SyzkzNm.png", "https://xatimg.com/image/XolBIYyv5uWG.png", "https://xatimg.com/image/r8dNAOaT8WgZ.png",
+            "https://xatimg.com/image/SqCFSP6RUb2X.png", "https://xatimg.com/image/NGt7pHNZ3RyJ.png", "https://xatimg.com/image/6FeqxKxK7DGv.png", "https://xatimg.com/image/bIqPWvx2Hnkq.png",
+            "https://xatimg.com/image/dKrq3dUX2gjH.png", "https://xatimg.com/image/VZt3GHEGBXz2.png", "https://xatimg.com/image/Yx9kmmsf0k94.png", "https://xatimg.com/image/KNv9QPyMcLtB.png",
+            "https://xatimg.com/image/YEXTyc1cySAp.png", "https://xatimg.com/image/yqk9vqgsOSw2.png", "https://xatimg.com/image/5XO8ucl8oORG.png", "https://xatimg.com/image/Kh8hVu8mYjNA.png",
+            "https://xatimg.com/image/Z9SvfeDxNUc2.png", "https://xatimg.com/image/ikOSlekDU99v.png", "https://xatimg.com/image/VrdGLXTvyTC9.png", "https://xatimg.com/image/XXFvRYD2f5OJ.png",
+            "https://xatimg.com/image/kOp8buN8N7bX.png", "https://xatimg.com/image/zQAebNSXuxjT.png", "https://xatimg.com/image/mKfyFZgiLJix.png", "https://xatimg.com/image/pKWa4INAblP9.png",
+            "https://xatimg.com/image/SB7B4fjmpdCB.png", "https://xatimg.com/image/ZPwd9GRgue1S.png", "https://xatimg.com/image/ollmZOJlxne0.png", "https://xatimg.com/image/UN3ZRno7J4KG.png",
+            "https://xatimg.com/image/aEpukbmNT7yg.png", "https://xatimg.com/image/jIaMCxFbn2Tt.png", "https://xatimg.com/image/2DQp61Py87V2.png", "https://xatimg.com/image/bZ8KoHeqZvEh.png",
+            "https://xatimg.com/image/CKk74532M0hL.png", "https://xatimg.com/image/X1HaWaXrrLOi.png", "https://xatimg.com/image/InWofNApgiIO.png", "https://xatimg.com/image/fsIAaf3zXatx.png",
+            "https://xatimg.com/image/o31gXa4BXV1e.png", "https://xatimg.com/image/NKpBxCgUS1Ic.png", "https://xatimg.com/image/6KXWpj1zqRMW.png", "https://xatimg.com/image/gpnIT8ASimCV.png",
+            "https://xatimg.com/image/kctRRe8khFVy.png", "https://xatimg.com/image/rHQhug7cG5oo.png", "https://xatimg.com/image/hMIhAagMO8Ke.png", "https://xatimg.com/image/5bNSFdgCOn1X.png",
+            "https://xatimg.com/image/8tPA80PYRuV9.png", "https://xatimg.com/image/2kL43xZRRsSD.png", "https://xatimg.com/image/6ANXV4KsJwDn.png", "https://xatimg.com/image/dISoo7uI5gOj.png",
+            "https://xatimg.com/image/yMWFFlMtXDV5.png", "https://xatimg.com/image/dJcVRyBfmRB1.png", "https://xatimg.com/image/RrvD8teZ2vYG.png", "https://xatimg.com/image/kV6homqu09Jg.png",
+            "https://xatimg.com/image/lsXJMlHi2JFl.png", "https://xatimg.com/image/46tdpRZCrVj5.png", "https://xatimg.com/image/BsDSkt3imAhx.png", "https://xatimg.com/image/jwo9xenoLvqj.png",
+            "https://xatimg.com/image/er1D7CujDSnM.png", "https://xatimg.com/image/Yd4WxPoyeJPc.png", "https://xatimg.com/image/kbGyCgC0oeDl.png", "https://xatimg.com/image/OhfNtx3YOjQN.png",
+            "https://xatimg.com/image/rNaWQDP6JWaN.png", "https://xatimg.com/image/J0k3w9apzoap.png", "https://xatimg.com/image/tVapfVzXfcaR.png", "https://xatimg.com/image/strOhwgirNs2.png",
+            "https://xatimg.com/image/O70FmAmazcgZ.png", "https://xatimg.com/image/hilFgW0ubJLJ.png", "https://xatimg.com/image/Xz0BJHV01vcu.png", "https://xatimg.com/image/oGYppprOwSJf.png",
+            "https://xatimg.com/image/aMnEfffg42eZ.png", "https://xatimg.com/image/bBB8x0FWCwKn.png", "https://xatimg.com/image/pZ2OiWbTmgCE.png", "https://xatimg.com/image/ckU4JxUmkxJv.png",
+            "https://xatimg.com/image/iBZYyymJL4EZ.png", "https://xatimg.com/image/641ACpWMttxS.png", "https://xatimg.com/image/4ze6oGfxeFcL.png", "https://xatimg.com/image/PaBMRZ5iVteJ.png",
+            "https://xatimg.com/image/MO8BkFjm46XS.png", "https://xatimg.com/image/njRLg1qh6rQK.png", "https://xatimg.com/image/eYT7VLMRNj5Q.png", "https://xatimg.com/image/JIMhT07ObU64.png",
+            "https://xatimg.com/image/SLTOjOBxHvme.png", "https://xatimg.com/image/oxfPtCRS4XvV.png", "https://xatimg.com/image/4FFFb92dOXEE.png", "https://xatimg.com/image/HrLTwjCDiaGu.png",
+            "https://xatimg.com/image/asBH5JsuE5Mk.png", "https://xatimg.com/image/0vRzfVVN3MvD.png", "https://xatimg.com/image/ba94AfiGEaWH.png", "https://xatimg.com/image/lx5eaD2CFrfA.png",
+            "https://xatimg.com/image/HiDofgCqFaZu.png", "https://xatimg.com/image/cC739xYz5pPY.png", "https://xatimg.com/image/XIDeW1JOX4Jk.png", "https://xatimg.com/image/VqWEvgCOc8u9.png",
+            "https://xatimg.com/image/SNs1tSbCJOSe.png", "https://xatimg.com/image/kcoxJ4KhnQQE.png", "https://xatimg.com/image/nKHXXdlEqI7V.png", "https://xatimg.com/image/dNqLQs2lphZr.png",
+            "https://xatimg.com/image/xC6RFxJ8oEgM.png", "https://xatimg.com/image/lV1wSE7syT2W.png", "https://xatimg.com/image/qPNoML8OUcru.png", "https://xatimg.com/image/MlWPCQFYqhYx.png",
+            "https://xatimg.com/image/RJZhh8f9kHiq.png", "https://xatimg.com/image/EV2P6eoYZTaJ.png", "https://xatimg.com/image/CtaTODHaDO6j.png", "https://xatimg.com/image/S38T4Dj3oPcs.png",
+            "https://xatimg.com/image/A9XHSM6tmcRv.png", "https://xatimg.com/image/NGNTUzkBcY4u.png", "https://xatimg.com/image/ySHKV5NEvIlb.png", "https://xatimg.com/image/2q8YrYzwks4u.png",
+            "https://xatimg.com/image/zg8AJbM6gNIG.png", "https://xatimg.com/image/ZOkCd4Gc0SM2.png", "https://xatimg.com/image/5BWWNJGR8kOm.png", "https://xatimg.com/image/IjWUHMPHWoDU.png",
+            "https://xatimg.com/image/RRicvptGyQxW.png", "https://xatimg.com/image/7ER58zU5SrzN.png", "https://xatimg.com/image/HDbQpxzw6Rx2.jpg", "https://xatimg.com/image/lO69OX7FSMk9.png",
+            "https://xatimg.com/image/aOahMDjabTSp.jpg", "https://xatimg.com/image/XDm1BG5NZIAx.jpg", "https://xatimg.com/image/rHwl2ejDehxc.png", "https://xatimg.com/image/U1bI0cr6ncsT.png",
+            "https://xatimg.com/image/09yABM2MUX0U.png", "https://xatimg.com/image/ZoXHfXS0LkEa.png", "https://xatimg.com/image/4L6zsIybZFc7.png", "https://xatimg.com/image/sp0YbqjI01jI.png"
+        ],
+        gifs: [
+            { src: "https://i.imgur.com/URZrVbS.gif", text: "4" },
+            { src: "https://i.imgur.com/lCxtbpe.gif", text: "120" },
+            { src: "https://i.imgur.com/nFZeEd3.gif", text: "6" },
+            { src: "https://i.imgur.com/ieyxBC2.gif", text: "8" },
+            { src: "https://i.imgur.com/juxybOM.gif", text: "10" },
+            { src: "https://i.imgur.com/enzVIl6.gif", text: "12" },
+            { src: "https://i.imgur.com/20Z6W4G.gif", text: "13" },
+            { src: "https://i.imgur.com/JMybW1R.gif", text: "15" },
+            { src: "https://i.imgur.com/dfHuZOU.gif", text: "15 b" },
+            { src: "https://i.imgur.com/BLYLULP.gif", text: "18" },
+            { src: "https://i.imgur.com/b9MjvWj.gif", text: "19" },
+            { src: "https://i.imgur.com/F5YWKyI.gif", text: "22" },
+            { src: "https://i.imgur.com/7SQbkQ2.gif", text: "25" },
+            { src: "https://i.imgur.com/JT0vwGc.gif", text: "27" },
+            { src: "https://i.imgur.com/DNxXlDn.gif", text: "28" },
+            { src: "https://i.imgur.com/WdgZhk1.gif", text: "44" },
+            { src: "https://i.imgur.com/CRP3M6f.gif", text: "75" },
+            { src: "https://i.imgur.com/FBwG4Jv.gif", text: "83" },
+            { src: "https://i.imgur.com/vLDiRPU.gif", text: "42" },
+            { src: "https://i.imgur.com/rTMAkxe.gif", text: "49" },
+            { src: "https://i.imgur.com/4QhnV0Z.gif", text: "56" },
+            { src: "https://i.imgur.com/kdyj2aR.gif", text: "67" },
+            { src: "https://i.imgur.com/XJB0VXV.gif", text: "76" },
+            { src: "https://i.imgur.com/UznUqa7.gif", text: "98" },
+            { src: "https://i.imgur.com/XQIPzea.gif", text: "104" },
+            { src: "https://i.imgur.com/FsJ1IJf.gif", text: "109" },
+            { src: "https://i.imgur.com/h5CO20x.gif", text: "117" },
+            { src: "https://i.imgur.com/dfHuZOU.gif", text: "15 b" },
+            { src: "https://i.imgur.com/BLYLULP.gif", text: "18" },
+            { src: "https://xatimg.com/image/mc0FLaILSBjK.gif", text: "3" },
+            { src: "https://xatimg.com/image/JGURVl4CDD4k.gif", text: "5" },
+            { src: "https://xatimg.com/image/xQAwlOzrUDzJ.gif", text: "9" },
+            { src: "https://xatimg.com/image/bOR56EXtaoBA.gif", text: "19b" },
+            { src: "https://xatimg.com/image/dY279HRW0fUg.gif", text: "24" },
+            { src: "https://xatimg.com/image/8v9VT7DdRA0F.gif", text: "32" }
+        ]
+    };
+
+    // DOM References
+    const homeView = document.getElementById('home-view'), galleryView = document.getElementById('gallery-view'), galleryGrid = document.getElementById('gallery-grid'), galleryTitleText = document.getElementById('gallery-title-text'), btnBacks = document.querySelectorAll('.back-btn'), lightbox = document.getElementById('lightbox'), lightboxImg = document.getElementById('lightbox-img'), lightboxClose = document.getElementById('lightbox-close'), nextImgBtn = document.getElementById('next-img'), prevImgBtn = document.getElementById('prev-img');
+    const btnMarried = document.getElementById('btn-married'), marriedView = document.getElementById('married-view');
+    const btnColores = document.getElementById('btn-colores'), coloresView = document.getElementById('colores-view');
+    let currentCategory = '', currentImageIndex = 0, typingTimeout;
+
+    // Navigation Sidebar
+    const navButtons = [{ id: 'btn-pcback', cat: 'pcback', title: 'PCBACK' }, { id: 'btn-pstyle', cat: 'pstyle', title: 'PSTYLE' }, { id: 'btn-pcback-gif', cat: 'pcback_gif', title: 'PCBACK GIF' }, { id: 'btn-pstyle-gif', cat: 'pstyle_gif', title: 'PSTYLE GIF' }, { id: 'btn-sala', cat: 'sala', title: 'BACKGROUNDS' }, { id: 'btn-gifs', cat: 'gifs', title: 'GIFS' }];
+    navButtons.forEach(btnInfo => { const btn = document.getElementById(btnInfo.id); if(btn) btn.addEventListener('click', () => openGallery(btnInfo.cat, btnInfo.title)); });
+    
+    // Asignar función Volver a todos los botones
+    btnBacks.forEach(btn => btn.addEventListener('click', showHome));
+    
+    // Married Logic
+    btnMarried.addEventListener('click', () => { 
+        homeView.classList.add('hidden'); 
+        galleryView.classList.remove('active');
+        coloresView.classList.remove('active');
+        marriedView.classList.add('active'); 
+    });
+    
+    function setMarriedImage(url) {
+        const img = document.getElementById('married-img-display');
+        img.style.opacity = '0'; // Fade out first
+        setTimeout(() => {
+            img.src = url;
+            img.onload = () => { img.style.opacity = '1'; }; // Fade in when loaded
+        }, 300);
+    }
+    
+    // Colores Zoom Logic
+    const coloresImg = document.querySelector('.colores-img');
+    if(coloresImg) {
+        coloresImg.addEventListener('dblclick', function() {
+            this.classList.toggle('zoomed');
+        });
+    }
+
+    // Colores Logic
+    btnColores.addEventListener('click', () => { 
+        homeView.classList.add('hidden'); 
+        galleryView.classList.remove('active');
+        marriedView.classList.remove('active');
+        coloresView.classList.add('active'); 
+    });
+
+    function showHome() { 
+        galleryView.classList.remove('active'); 
+        coloresView.classList.remove('active'); 
+        marriedView.classList.remove('active'); 
+        setTimeout(() => homeView.classList.remove('hidden'), 300); 
+        galleryGrid.innerHTML = ''; 
+        currentCategory = ''; 
+    }
+    
+    function openGallery(category, title) { 
+        currentCategory = category; 
+        homeView.classList.add('hidden'); 
+        marriedView.classList.remove('active');
+        coloresView.classList.remove('active');
+        galleryView.classList.add('active'); 
+        galleryGrid.className = 'gallery-grid'; 
+        if (category === 'pstyle' || category === 'pstyle_gif') galleryGrid.classList.add('pstyle-mode'); else if (category === 'sala') galleryGrid.classList.add('sala-mode'); else if (category === 'gifs') galleryGrid.classList.add('gifs-mode'); 
+        renderItems(category); 
+        typeTitle(title); 
+    }
+    
+    function renderItems(category) { galleryGrid.innerHTML = ''; const items = galleryData[category] || []; items.forEach((item, index) => { const el = document.createElement('div'); el.className = 'gallery-item'; if (category === 'gifs') { const img = document.createElement('img'); img.src = item.src; img.alt = item.text; const caption = document.createElement('div'); caption.className = 'item-caption'; caption.innerText = item.text; el.appendChild(img); el.appendChild(caption); } else { const img = document.createElement('img'); img.src = item; el.appendChild(img); el.addEventListener('click', () => openLightbox(index)); } galleryGrid.appendChild(el); }); }
+    function typeTitle(text) { galleryTitleText.innerText = ''; clearTimeout(typingTimeout); let i = 0; function type() { if (i < text.length) { galleryTitleText.innerText += text.charAt(i); i++; typingTimeout = setTimeout(type, 350); } else { typingTimeout = setTimeout(() => typeTitle(text), 5000); } } type(); }
+    
+    // Lightbox Logic
+    function openLightbox(index) { currentImageIndex = index; updateLightboxImage(); lightbox.classList.add('open'); }
+    function closeLightbox() { lightbox.classList.remove('open'); }
+    function updateLightboxImage() { const items = galleryData[currentCategory]; if (!items) return; const src = typeof items[currentImageIndex] === 'string' ? items[currentImageIndex] : items[currentImageIndex].src; lightboxImg.src = src; }
+    function nextImage() { const items = galleryData[currentCategory]; if (!items) return; currentImageIndex = (currentImageIndex + 1) % items.length; updateLightboxImage(); }
+    function prevImage() { const items = galleryData[currentCategory]; if (!items) return; currentImageIndex = (currentImageIndex - 1 + items.length) % items.length; updateLightboxImage(); }
+    lightboxClose.addEventListener('click', closeLightbox); nextImgBtn.addEventListener('click', (e) => { e.stopPropagation(); nextImage(); }); prevImgBtn.addEventListener('click', (e) => { e.stopPropagation(); prevImage(); }); lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); }); document.addEventListener('keydown', (e) => { if (!lightbox.classList.contains('open')) return; if (e.key === 'Escape') closeLightbox(); if (e.key === 'ArrowRight') nextImage(); if (e.key === 'ArrowLeft') prevImage(); });
+
+    // Audio Player with User Interaction (Touch/Click)
+    const audio = document.getElementById('bg-music');
+    const musicDisc = document.getElementById('music-disc');
+    let hasInteracted = false;
+
+    function toggleMusic() {
+        if (audio.paused) {
+            audio.play();
+            musicDisc.classList.add('spinning');
+        } else {
+            audio.pause();
+            musicDisc.classList.remove('spinning');
+        }
+    }
+
+    // First interaction handler
+    function startAudioOnInteraction() {
+        if (!hasInteracted) {
+            audio.play().then(() => {
+                musicDisc.classList.add('spinning');
+                hasInteracted = true;
+            }).catch(e => {
+                console.log("Auto-play blocked, waiting for click on disc");
+            });
+            // Remove listeners once activated
+            document.removeEventListener('click', startAudioOnInteraction);
+            document.removeEventListener('touchstart', startAudioOnInteraction);
+        }
+    }
+
+    document.addEventListener('click', startAudioOnInteraction);
+    document.addEventListener('touchstart', startAudioOnInteraction);
+
+    // Disc click handler
+    musicDisc.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent triggering the document listener
+        toggleMusic();
+    });
+
+    // CONTADOR DE VISITAS (Simulado con localStorage para persistencia local)
+    const counterElement = document.getElementById('visit-counter');
+    let visits = localStorage.getItem('portfolio_visits');
+    
+    // Si no existe, iniciamos en un número "interesante" para que no se vea vacío
+    if (!visits) {
+        visits = 3420; 
+    } else {
+        visits = parseInt(visits) + 1;
+    }
+    
+    localStorage.setItem('portfolio_visits', visits);
+    if(counterElement) counterElement.innerText = `VISITAS: ${visits}`;
+
+</script>
+</body>
+</html>
